@@ -78,15 +78,15 @@ def main():
                    'is24hour': is24hour}
 
         renderService = RenderHelper(imageWidth, imageHeight, rotateAngle)
-        calBlackImage, calRedImage = renderService.process_inputs(calDict)
+        calendarImage = renderService.process_inputs(calDict)
 
         if isDisplayToScreen:
             from display.display import DisplayHelper
             displayService = DisplayHelper(screenWidth, screenHeight)
             if currDate.weekday() == weekStartDay:
                 # calibrate display once a week to prevent ghosting
-                displayService.calibrate(cycles=0)  # to calibrate in production
-            displayService.update(calBlackImage, calRedImage)
+                displayService.calibrate(cycles=1)  # to calibrate in production
+            displayService.update(calendarImage)
             displayService.sleep()
 
         currBatteryLevel = powerService.get_battery()

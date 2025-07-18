@@ -52,35 +52,25 @@ class RenderHelper:
     def get_screenshot(self):
         opts = Options()
         opts.add_argument("--headless")
-        opts.add_argument("--hide-scrollbars");
+        opts.add_argument("--hide-scrollbars")
         opts.add_argument('--force-device-scale-factor=1')
         driver = webdriver.Chrome(options=opts)
+
         self.set_viewport_size(driver)
         driver.get(self.htmlFile)
         sleep(1)
-        driver.get_screenshot_as_file(self.currPath + '/calendar.png')
+        screenshot_path = self.currPath + '/calendar.png'
+        driver.get_screenshot_as_file(screenshot_path)
         driver.quit()
 
         self.logger.info('Screenshot captured and saved to file.')
 
-        redimg = Image.open(self.currPath + '/calendar.png')  # get image)
-        rpixels = redimg.load()  # create the pixel map
-        blackimg = Image.open(self.currPath + '/calendar.png')  # get image)
-        bpixels = blackimg.load()  # create the pixel map
+        # Load full-color image and rotate it
+        color_img = Image.open(screenshot_path).convert("RGB")
+        color_img = color_img.rotate(self.rotateAngle, expand=True)
 
-        for i in range(redimg.size[0]):  # loop through every pixel in the image
-            for j in range(redimg.size[1]): # since both bitmaps are identical, cycle only once and not both bitmaps
-                if rpixels[i, j][0] <= rpixels[i, j][1] and rpixels[i, j][0] <= rpixels[i, j][2]:  # if is not red
-                    rpixels[i, j] = (255, 255, 255)  # change it to white in the red image bitmap
-
-                elif bpixels[i, j][0] > bpixels[i, j][1] and bpixels[i, j][0] > bpixels[i, j][2]:  # if is red
-                    bpixels[i, j] = (255, 255, 255)  # change to white in the black image bitmap
-
-        redimg = redimg.rotate(self.rotateAngle, expand=True)
-        blackimg = blackimg.rotate(self.rotateAngle, expand=True)
-
-        self.logger.info('Image colours processed. Extracted grayscale and red images.')
-        return blackimg, redimg
+        self.logger.info('Full-color image processed.')
+        return color_img
 
     def get_day_in_cal(self, startDate, eventDate):
         delta = eventDate - startDate
@@ -206,6 +196,5 @@ class RenderHelper:
                                                 events=cal_events_text))
         htmlFile.close()
 
-        calBlackImage, calRedImage = self.get_screenshot()
-
-        return calBlackImage, calRedImage
+        calendarImage = self.get_screenshot()
+        return calendarImage

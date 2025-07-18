@@ -4,7 +4,7 @@
 This part of the code exposes functions to interface with the eink display
 """
 
-import display.epd12in48b as eink
+import display.epd13in3E as eink
 from PIL import Image
 import logging
 
@@ -19,25 +19,40 @@ class DisplayHelper:
         self.epd = eink.EPD()
         self.epd.Init()
 
-    def update(self, blackimg, redimg):
-        # Updates the display with the grayscale and red images
-        # start displaying on eink display
+    def update(self, rgb_image):
+        """
+        Updates the display with a full-color image (PIL.Image).
+        The image will be quantized to the 7-color palette.
+        """
+
         # self.epd.clear()
-        self.epd.display(blackimg, redimg)
+        buf = self.epd.getbuffer(rgb_image)
+        self.epd.display(buf)
         self.logger.info('E-Ink display update complete.')
 
     def calibrate(self, cycles=1):
-        # Calibrates the display to prevent ghosting
-        white = Image.new('1', (self.screenwidth, self.screenheight), 'white')
-        black = Image.new('1', (self.screenwidth, self.screenheight), 'black')
+        """
+        Cycles through solid colors to prevent ghosting.
+        """
+        colors = [
+            (255, 255, 255),  # White
+            (0, 0, 0),        # Black
+            (255, 255, 0),    # Yellow
+            (255, 0, 0),      # Red
+            (0, 0, 255),      # Blue
+            (0, 255, 0),      # Green
+        ]
         for _ in range(cycles):
-            self.epd.display(black, white)
-            self.epd.display(white, black)
-            self.epd.display(white, white)
+            for color in colors:
+                image = Image.new("RGB", (self.screenwidth, self.screenheight), color)
+                buf = self.epd.getbuffer(image)
+                self.epd.display(buf)
         self.logger.info('E-Ink display calibration complete.')
 
     def sleep(self):
-        # send E-Ink display to deep sleep
-        self.epd.EPD_Sleep()
+        """
+        Puts the display into deep sleep.
+        """
+        self.epd.sleep()
         self.logger.info('E-Ink display entered deep sleep.')
 
