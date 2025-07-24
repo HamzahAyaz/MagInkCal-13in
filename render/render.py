@@ -94,87 +94,87 @@ class RenderHelper:
                 datetime_str = '{}{}am'.format(str(datetimeObj.hour), datetime_str)
         return datetime_str
 
-    def process_inputs(self, calDict):
-        # calDict = {'events': eventList, 'calStartDate': calStartDate, 'today': currDate, 'lastRefresh': currDatetime, 'batteryLevel': batteryLevel}
+    def generateMonthCal(self, cal_dict):
+        # calDict = {'eventsMonthCal': eventList, 'calStartDate': calStartDate, 'today': currDate, 'lastRefresh': currDatetime, 'batteryLevel': batteryLevel}
         # first setup list to represent the 5 weeks in our calendar
-        calList = []
+        cal_list = []
         for i in range(35):
-            calList.append([])
+            cal_list.append([])
 
         # retrieve calendar configuration
-        maxEventsPerDay = calDict['maxEventsPerDay']
-        batteryDisplayMode = calDict['batteryDisplayMode']
-        dayOfWeekText = calDict['dayOfWeekText']
-        weekStartDay = calDict['weekStartDay']
-        is24hour = calDict['is24hour']
+        max_events_per_day = cal_dict['maxEventsPerDay']
+        battery_display_mode = cal_dict['batteryDisplayMode']
+        day_of_week_text = cal_dict['dayOfWeekText']
+        week_start_day = cal_dict['weekStartDay']
+        is24hour = cal_dict['is24hour']
 
         # for each item in the eventList, add them to the relevant day in our calendar list
-        for event in calDict['events']:
-            idx = self.get_day_in_cal(calDict['calStartDate'], event['startDatetime'].date())
+        for event in cal_dict['eventsMonthCal']:
+            idx = self.get_day_in_cal(cal_dict['calStartDate'], event['startDatetime'].date())
             if idx >= 0:
-                calList[idx].append(event)
+                cal_list[idx].append(event)
             if event['isMultiday']:
-                idx = self.get_day_in_cal(calDict['calStartDate'], event['endDatetime'].date())
-                if idx < len(calList):
-                    calList[idx].append(event)
+                idx = self.get_day_in_cal(cal_dict['calStartDate'], event['endDatetime'].date())
+                if idx < len(cal_list):
+                    cal_list[idx].append(event)
 
         # Read html template
         with open(self.currPath + '/calendar_template.html', 'r') as file:
             calendar_template = file.read()
 
         # Insert month header
-        month_name = str(calDict['today'].month)
+        month_name = str(cal_dict['today'].month)
 
         # Insert battery icon
         # batteryDisplayMode - 0: do not show / 1: always show / 2: show when battery is low
-        battLevel = calDict['batteryLevel']
+        batt_level = cal_dict['batteryLevel']
 
-        if batteryDisplayMode == 0:
-            battText = 'batteryHide'
-        elif batteryDisplayMode == 1:
-            if battLevel >= 80:
-                battText = 'battery80'
-            elif battLevel >= 60:
-                battText = 'battery60'
-            elif battLevel >= 40:
-                battText = 'battery40'
-            elif battLevel >= 20:
-                battText = 'battery20'
+        if battery_display_mode == 0:
+            batt_text = 'batteryHide'
+        elif battery_display_mode == 1:
+            if batt_level >= 80:
+                batt_text = 'battery80'
+            elif batt_level >= 60:
+                batt_text = 'battery60'
+            elif batt_level >= 40:
+                batt_text = 'battery40'
+            elif batt_level >= 20:
+                batt_text = 'battery20'
             else:
-                battText = 'battery0'
+                batt_text = 'battery0'
 
-        elif batteryDisplayMode == 2 and battLevel < 20.0:
-            battText = 'battery0'
-        elif batteryDisplayMode == 2 and battLevel >= 20.0:
-            battText = 'batteryHide'
+        elif battery_display_mode == 2 and batt_level < 20.0:
+            batt_text = 'battery0'
+        elif battery_display_mode == 2 and batt_level >= 20.0:
+            batt_text = 'batteryHide'
 
         # Populate the day of week row
         cal_days_of_week = ''
         for i in range(0, 7):
-            cal_days_of_week += '<li class="font-weight-bold text-uppercase">' + dayOfWeekText[
-                (i + weekStartDay) % 7] + "</li>\n"
+            cal_days_of_week += '<li class="font-weight-bold text-uppercase">' + day_of_week_text[
+                (i + week_start_day) % 7] + "</li>\n"
 
         # Populate the date and events
         cal_events_text = ''
-        for i in range(len(calList)):
-            currDate = calDict['calStartDate'] + timedelta(days=i)
-            dayOfMonth = currDate.day
-            if currDate == calDict['today']:
-                cal_events_text += '<li><div class="datecircle">' + str(dayOfMonth) + '</div>\n'
-            elif currDate.month != calDict['today'].month:
-                cal_events_text += '<li><div class="date text-muted">' + str(dayOfMonth) + '</div>\n'
+        for i in range(len(cal_list)):
+            curr_date = cal_dict['calStartDate'] + timedelta(days=i)
+            day_of_month = curr_date.day
+            if curr_date == cal_dict['today']:
+                cal_events_text += '<li><div class="datecircle">' + str(day_of_month) + '</div>\n'
+            elif curr_date.month != cal_dict['today'].month:
+                cal_events_text += '<li><div class="date text-muted">' + str(day_of_month) + '</div>\n'
             else:
-                cal_events_text += '<li><div class="date">' + str(dayOfMonth) + '</div>\n'
+                cal_events_text += '<li><div class="date">' + str(day_of_month) + '</div>\n'
 
-            for j in range(min(len(calList[i]), maxEventsPerDay)):
-                event = calList[i][j]
+            for j in range(min(len(cal_list[i]), max_events_per_day)):
+                event = cal_list[i][j]
                 cal_events_text += '<div class="event'
                 if event['isUpdated']:
                     cal_events_text += ' text-danger'
-                elif currDate.month != calDict['today'].month:
+                elif curr_date.month != cal_dict['today'].month:
                     cal_events_text += ' text-muted'
                 if event['isMultiday']:
-                    if event['startDatetime'].date() == currDate:
+                    if event['startDatetime'].date() == curr_date:
                         cal_events_text += '">►' + event['summary']
                     else:
                         # calHtmlList.append(' text-multiday">')
@@ -185,16 +185,75 @@ class RenderHelper:
                     cal_events_text += '">' + self.get_short_time(event['startDatetime'], is24hour) + ' ' + event[
                         'summary']
                 cal_events_text += '</div>\n'
-            if len(calList[i]) > maxEventsPerDay:
-                cal_events_text += '<div class="event text-muted">' + str(len(calList[i]) - maxEventsPerDay) + ' more'
+            if len(cal_list[i]) > max_events_per_day:
+                cal_events_text += '<div class="event text-muted">' + str(len(cal_list[i]) - max_events_per_day) + ' more'
 
             cal_events_text += '</li>\n'
 
         # Append the bottom and write the file
-        htmlFile = open(self.currPath + '/calendar.html', "w")
-        htmlFile.write(calendar_template.format(month=month_name, battText=battText, dayOfWeek=cal_days_of_week,
+        html_file = open(self.currPath + '/calendar.html', "w")
+        html_file.write(calendar_template.format(month=month_name, battText=batt_text, dayOfWeek=cal_days_of_week,
                                                 events=cal_events_text))
-        htmlFile.close()
+        html_file.close()
 
-        calendarImage = self.get_screenshot()
-        return calendarImage
+        calendar_image = self.get_screenshot()
+        return calendar_image
+
+    def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, event_list, num_cal_days):
+
+        # Read html template
+        with open(self.currPath + '/dashboard_template.html', 'r') as file:
+            dashboard_template = file.read()
+
+        # Populate the date and events
+        cal_events_list = []
+        for i in range(num_cal_days):
+            if len(event_list[i]) > 0:
+                cal_events_text = ""
+            else:
+                cal_events_text = '<div class="event"><span class="event-time">None</span></div>'
+            for event in event_list[i]:
+                cal_events_text += '<div class="event">'
+                if event["isMultiday"] or event["allday"]:
+                    cal_events_text += event['summary']
+                else:
+                    cal_events_text += '<span class="event-time">' + self.get_short_time(event['startDatetime']) + '</span> ' + event['summary']
+                cal_events_text += '</div>\n'
+            cal_events_list.append(cal_events_text)
+
+        # Append the bottom and write the file
+        html_file = open(self.currPath + '/dashboard.html', "w")
+        html_file.write(dashboard_template.format(
+            day=current_date.strftime("%-d"),
+            month=current_date.strftime("%B"),
+            weekday=current_date.strftime("%A"),
+            tomorrow=(current_date + timedelta(days=1)).strftime("%A"),
+            dayafter=(current_date + timedelta(days=2)).strftime("%A"),
+            events_today=cal_events_list[0],
+            events_tomorrow=cal_events_list[1],
+            events_dayafter=cal_events_list[2],
+            # I'm choosing to show the forecast for the next hour instead of the current weather
+            # current_weather_text=day_of_month.capwords(current_weather["weather"][0]["description"]),
+            # current_weather_id=current_weather["weather"][0]["id"],
+            # current_weather_temp=round(current_weather["temp"]),
+            current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
+            current_weather_id=hourly_forecast[1]["weather"][0]["id"],
+            current_weather_temp=round(hourly_forecast[1]["temp"]),
+            today_weather_id=daily_forecast[0]["weather"][0]["id"],
+            tomorrow_weather_id=daily_forecast[1]["weather"][0]["id"],
+            dayafter_weather_id=daily_forecast[2]["weather"][0]["id"],
+            today_weather_pop=str(round(daily_forecast[0]["pop"] * 100)),
+            tomorrow_weather_pop=str(round(daily_forecast[1]["pop"] * 100)),
+            dayafter_weather_pop=str(round(daily_forecast[2]["pop"] * 100)),
+            today_weather_min=str(round(daily_forecast[0]["temp"]["min"])),
+            tomorrow_weather_min=str(round(daily_forecast[1]["temp"]["min"])),
+            dayafter_weather_min=str(round(daily_forecast[2]["temp"]["min"])),
+            today_weather_max=str(round(daily_forecast[0]["temp"]["max"])),
+            tomorrow_weather_max=str(round(daily_forecast[1]["temp"]["max"])),
+            dayafter_weather_max=str(round(daily_forecast[2]["temp"]["max"])),
+        ))
+        html_file.close()
+
+        calendar_image = self.get_screenshot()
+        return calendar_image
+
