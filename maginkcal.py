@@ -8,8 +8,11 @@ conversions) that are not tested comprehensively, since my calendar/events are l
 There will also be work needed to adjust the calendar rendering for different screen sizes, such as modifying of the
 CSS stylesheets in the "render" folder.
 """
+import time
 import datetime as dt
+import os
 import sys
+import subprocess
 
 from pytz import timezone
 from gcal.gcal import GcalHelper
@@ -83,9 +86,11 @@ def main():
         if isDisplayToScreen:
             from display.display import DisplayHelper
             displayService = DisplayHelper(screenWidth, screenHeight)
+
             if currDate.weekday() == weekStartDay:
                 # calibrate display once a week to prevent ghosting
                 displayService.calibrate(cycles=1)  # to calibrate in production
+
             displayService.update(calendarImage)
             displayService.sleep()
 
@@ -99,14 +104,31 @@ def main():
 
     logger.info("Checking if configured to shutdown safely - Current hour: {}".format(currDatetime.hour))
     if isShutdownOnComplete:
-        # implementing a failsafe so that we don't shutdown when debugging
-        # checking if it's 6am in the morning, which is the time I've set PiSugar to wake and refresh the calendar
-        # if it is 6am, shutdown the RPi. if not 6am, assume I'm debugging the code, so do not shutdown
-        if currDatetime.hour == 6:
-            logger.info("Shutting down safely.")
-            import os
-            os.system("sudo shutdown -h now")
+        # Perform Smart Shutdown:
+        # - Wait 5min before initiating shutdown
+        # - After 5min check if any user is logged in, if so then delay shutdown by 5min
+        # - Recheck and delay shutdown until user is no longer logged in.
 
+        perform_smart_shutdown(logger, 300)
+
+def is_user_logged_in():
+    result = subprocess.run(['who'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return bool(result.stdout.strip())  # True if anyone is logged in
+
+def perform_smart_shutdown(logger, check_interval=300):
+    while True:
+        time.sleep(check_interval)
+        if not is_user_logged_in():
+            logger.info("No user session detected — shutting down safely.")
+            os.system("sudo shutdown -h now")
+            break
+        else:
+            logger.info("User session detected. Postponing shutdown.")
+
+def perform_clocked_shutdown(logger, curr_date_time, hour_to_shutdown=11):
+    if curr_date_time.hour == hour_to_shutdown:
+        logger.info("Shutting down safely.")
+        os.system("sudo shutdown -h now")
 
 if __name__ == "__main__":
     main()
