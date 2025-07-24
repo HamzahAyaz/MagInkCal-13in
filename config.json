@@ -1,9 +1,10 @@
 {
-  "displayTZ": "Asia/Hong_Kong",
+  "displayTZ": "Asia/Karachi",
   "thresholdHours": 24,
   "maxEventsPerDay": 3,
   "isDisplayToScreen": true,
   "isShutdownOnComplete": true,
+  "autoShutdownHour": 11,
   "batteryDisplayMode": 1,
   "weekStartDay": 6,
   "dayOfWeekText": ["M", "T", "W", "T", "F", "S", "S"],
@@ -13,7 +14,13 @@
   "imageHeight": 1600,
   "rotateAngle": 0,
   "is24h": false,
-  "calendars": [
-    "primary"
-  ]
+  "calendars": [ "primary" ],
+  "dayViewCalDaysToShow": 3,
+  "owm_api_key": "ENTER YOUR OWN API KEY HERE",
+  "lat": 22.3193,
+  "lon": 114.1694
 }
+
+
+
+
