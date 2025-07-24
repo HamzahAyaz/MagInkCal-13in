@@ -82,6 +82,47 @@ class GcalHelper:
         # check if event stretches across multiple days
         return start.date() != end.date()
 
+    def get_day_in_cal(self, startDate, eventDate):
+        delta = eventDate - startDate
+        return delta.days
+
+    def get_short_time(self, datetimeObj):
+        datetime_str = ''
+        if datetimeObj.minute > 0:
+            datetime_str = '.{:02d}'.format(datetimeObj.minute)
+
+        if datetimeObj.hour == 0:
+            datetime_str = '12{}am'.format(datetime_str)
+        elif datetimeObj.hour == 12:
+            datetime_str = '12{}pm'.format(datetime_str)
+        elif datetimeObj.hour > 12:
+            datetime_str = '{}{}pm'.format(str(datetimeObj.hour % 12), datetime_str)
+        else:
+            datetime_str = '{}{}am'.format(str(datetimeObj.hour), datetime_str)
+        return datetime_str
+
+    def get_events(self, currDate, calendars, calStartDatetime, calEndDatetime, displayTZ, numDays, thresholdHours):
+        monthCalEventList = self.retrieve_events(calendars, calStartDatetime, calEndDatetime, displayTZ, thresholdHours)
+
+        # check if event stretches across multiple days
+        dayCalEventList = []
+        for i in range(numDays):
+            dayCalEventList.append([])
+        for event in monthCalEventList:
+            idx = self.get_day_in_cal(currDate, event['startDatetime'].date())
+            if event['isMultiday']:
+                end_idx = self.get_day_in_cal(currDate, event['endDatetime'].date())
+                if idx < 0:
+                    idx = 0
+                if end_idx >= len(dayCalEventList):
+                    end_idx = len(dayCalEventList) - 1
+                for i in range(idx, end_idx + 1):
+                    dayCalEventList[i].append(event)
+            elif idx >= 0:
+                dayCalEventList[idx].append(event)
+
+        return dayCalEventList
+
     def retrieve_events(self, calendars, startDatetime, endDatetime, localTZ, thresholdHours):
         # Call the Google Calendar API and return a list of events that fall within the specified dates
         eventList = []
