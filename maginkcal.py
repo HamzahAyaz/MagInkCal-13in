@@ -126,11 +126,11 @@ def main():
                 display_service.update(daily_calendar_image)
                 display_service.sleep()
 
-            logger.info("Day View displayed, waiting 5 min to redisplay Month View... ")
-            time.sleep(300) # Wait 5min before displaying Month view again
+                logger.info("Day View displayed, waiting 5 min to redisplay Month View... ")
+                time.sleep(300) # Wait 5min before displaying Month view again
 
         except Exception as e:
-            logger.error("Error while proces DayView:" + e)
+            logger.error(e)
 
     # Display Month View
     if is_display_to_screen:

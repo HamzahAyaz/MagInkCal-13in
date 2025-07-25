@@ -58,7 +58,6 @@ for find_dir in find_dirs:
     if val == 64:
         if val_1 == "":
             so_filename = os.path.join(find_dir, 'DEV_Config_64_b.so')
-            print("Hello")
         else:
             so_filename = os.path.join(find_dir, 'DEV_Config_64_w.so')
     else:
@@ -67,7 +66,6 @@ for find_dir in find_dirs:
         else:
             so_filename = os.path.join(find_dir, 'DEV_Config_32_w.so')
     if os.path.exists(so_filename):
-        print("Hi")
         spi = CDLL(so_filename)
         break
 if spi is None:

@@ -11,22 +11,21 @@ calendar and refreshing of the eInk display. In the future, I might choose to ge
 RPi device, while using a ESP32 or PiZero purely to just retrieve the image from a file host and update the screen.
 """
 
+import string
+import pathlib
+import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from time import sleep
 from datetime import timedelta
-import pathlib
 from PIL import Image
-import logging
-
 
 class RenderHelper:
 
     def __init__(self, width, height, angle):
         self.logger = logging.getLogger('maginkcal')
         self.currPath = str(pathlib.Path(__file__).parent.absolute())
-        self.htmlFile = 'file://' + self.currPath + '/calendar.html'
         self.imageWidth = width
         self.imageHeight = height
         self.rotateAngle = angle
@@ -49,7 +48,7 @@ class RenderHelper:
             width=target_width,
             height=target_height)
 
-    def get_screenshot(self):
+    def get_screenshot(self, name="calendar"):
         opts = Options()
         opts.add_argument("--headless")
         opts.add_argument("--hide-scrollbars")
@@ -57,9 +56,9 @@ class RenderHelper:
         driver = webdriver.Chrome(options=opts)
 
         self.set_viewport_size(driver)
-        driver.get(self.htmlFile)
+        driver.get('file://' + self.currPath + '/' + name + '.html')
         sleep(1)
-        screenshot_path = self.currPath + '/calendar.png'
+        screenshot_path = self.currPath + '/' + name + ".png"
         driver.get_screenshot_as_file(screenshot_path)
         driver.quit()
 
@@ -196,7 +195,7 @@ class RenderHelper:
                                                 events=cal_events_text))
         html_file.close()
 
-        calendar_image = self.get_screenshot()
+        calendar_image = self.get_screenshot("calendar")
         return calendar_image
 
     def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, event_list, num_cal_days):
@@ -254,6 +253,6 @@ class RenderHelper:
         ))
         html_file.close()
 
-        calendar_image = self.get_screenshot()
+        calendar_image = self.get_screenshot("dashboard")
         return calendar_image
 
