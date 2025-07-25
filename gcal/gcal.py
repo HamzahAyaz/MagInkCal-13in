@@ -148,31 +148,42 @@ class GcalHelper:
 
         if not events:
             self.logger.info('No upcoming events found.')
+
         for event in events:
             # extracting and converting events data into a new list
-            newEvent = {}
-            newEvent['summary'] = event['summary']
+            new_event = {}
 
             if event['start'].get('dateTime') is None:
-                newEvent['allday'] = True
-                newEvent['startDatetime'] = self.to_datetime(event['start'].get('date'), localTZ)
+                new_event['allday'] = True
+                new_event['startDatetime'] = self.to_datetime(event['start'].get('date'), localTZ)
             else:
-                newEvent['allday'] = False
-                newEvent['startDatetime'] = self.to_datetime(event['start'].get('dateTime'), localTZ)
+                new_event['allday'] = False
+                new_event['startDatetime'] = self.to_datetime(event['start'].get('dateTime'), localTZ)
 
             if event['end'].get('dateTime') is None:
-                newEvent['endDatetime'] = self.adjust_end_time(self.to_datetime(event['end'].get('date'), localTZ),
-                                                               localTZ)
+                new_event['endDatetime'] = self.adjust_end_time(self.to_datetime(event['end'].get('date'), localTZ), localTZ)
             else:
-                newEvent['endDatetime'] = self.adjust_end_time(self.to_datetime(event['end'].get('dateTime'), localTZ),
-                                                               localTZ)
+                new_event['endDatetime'] = self.adjust_end_time(self.to_datetime(event['end'].get('dateTime'), localTZ), localTZ)
 
-            newEvent['updatedDatetime'] = self.to_datetime(event['updated'], localTZ)
-            newEvent['isUpdated'] = self.is_recent_updated(newEvent['updatedDatetime'], thresholdHours)
-            newEvent['isMultiday'] = self.is_multiday(newEvent['startDatetime'], newEvent['endDatetime'])
-            eventList.append(newEvent)
+            new_event['summary'] = event.get('summary', '(No Title)')
+            new_event['updatedDatetime'] = self.to_datetime(event['updated'], localTZ)
+            new_event['isUpdated'] = self.is_recent_updated(new_event['updatedDatetime'], thresholdHours)
+            new_event['isMultiday'] = self.is_multiday(new_event['startDatetime'], new_event['endDatetime'])
+
+            # Location override for Google Meet
+            new_event['location'] = event.get('location', '')
+            if new_event['location'].startswith('https://meet.google.com'):
+                new_event['location'] = 'Google Meet Conference'
+
+            # Default 'None' if description is empty
+            new_event['description'] = event.get('description', '')
+            if new_event['description'] == '':
+                new_event['description'] = 'None'
+
+            eventList.append(new_event)
 
         # We need to sort eventList because the event will be sorted in "calendar order" instead of hours order
         # TODO: improve because of double cycle for now is not much cost
         eventList = sorted(eventList, key=lambda k: k['startDatetime'])
+
         return eventList

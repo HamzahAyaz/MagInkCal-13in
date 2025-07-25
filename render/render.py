@@ -207,17 +207,31 @@ class RenderHelper:
         # Populate the date and events
         cal_events_list = []
         for i in range(num_cal_days):
-            if len(event_list[i]) > 0:
-                cal_events_text = ""
-            else:
+            cal_events_text = ""
+
+            if len(event_list[i]) == 0:
                 cal_events_text = '<div class="event"><span class="event-time">None</span></div>'
-            for event in event_list[i]:
-                cal_events_text += '<div class="event">'
-                if event["isMultiday"] or event["allday"]:
-                    cal_events_text += event['summary']
-                else:
-                    cal_events_text += '<span class="event-time">' + self.get_short_time(event['startDatetime']) + '</span> ' + event['summary']
-                cal_events_text += '</div>\n'
+            elif i == 0:  # TODAY — detailed format, only once
+                # cal_events_text += '<ul class="event-today-list">'
+                for event in event_list[i]:
+                    cal_events_text += f"""
+                        <li class="event">
+                            <strong>{event['summary']}</strong><br>
+                            <span class="event-today">Time: {self.get_short_time(event['startDatetime'])}</span><br>
+                            <span class="event-today">Location: {event['location']}</span><br>
+                            <span class="event-today">Notes: {event['description']}</span><br><br>
+                        </li>
+                    """
+                # cal_events_text += '</ul>'
+            else:  # FUTURE DAYS — condensed format
+                for event in event_list[i]:
+                    cal_events_text += '<div class="event">'
+                    if event["isMultiday"] or event["allday"]:
+                        cal_events_text += event['summary']
+                    else:
+                        cal_events_text += f'<span class="event-time">{self.get_short_time(event["startDatetime"])}</span> {event["summary"]}'
+                    cal_events_text += '</div>\n'
+
             cal_events_list.append(cal_events_text)
 
         # Append the bottom and write the file

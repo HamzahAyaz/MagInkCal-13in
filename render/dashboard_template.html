@@ -10,8 +10,11 @@
     </head>
     <body style="background: url('background.jpg') no-repeat center center fixed; background-size: cover;>
         <div class="container">
-            <!-- Calendar -->
+            <!-- Dashboard -->
             <div class="row justify-content-center">
+
+                <!-- Weather + Upcoming Events -->
+
                 <div class="col-md-6">
                     <div class="row">
                         <div class="col-md-12">
@@ -84,26 +87,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 50px"></div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 50px"></div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12">
-                            <h2>Today</h2>
-                            <ol class="list-unstyled">
-                                {events_today}
-                            </ol>
+
+                    <!-- Upcoming Events -->
+
+                    <div class="row align-items-start" style="padding-left: 40px; padding-top: 100px;">  <!-- Add padding here -->
+                        <div class="col-md-12 text-left">
+                            <h1><strong>Upcoming Events:</strong></h1>
                         </div>
                     </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 10px"></div>
-                    </div>
-                    <div class="row align-items-start ">
+                    <div class="row align-items-start" style="padding-left: 40px;">
                         <div class="col-md-12">
                             <h2>{tomorrow}</h2>
                             <ol class="list-unstyled">
@@ -111,14 +103,30 @@
                             </ol>
                         </div>
                     </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 10px"></div>
-                    </div>
-                    <div class="row align-items-start ">
+                    <div class="row align-items-start" style="padding-left: 40px;">
                         <div class="col-md-12">
                             <h2>{dayafter}</h2>
                             <ol class="list-unstyled">
                                 {events_dayafter}
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="row align-items-start ">
+                        <div class="col-md-12"  style="height: 50px"></div>
+                    </div>
+                </div>
+
+                <!-- Today Events -->
+
+                <div class="col-md-6">
+                    <div class="row align-items-start ">
+                        <div class="col-md-12"  style="height: 50px"></div>
+                    </div>
+                    <div class="row align-items-start ">
+                        <div class="col-md-12">
+                            <h1><strong>Today</strong></h1><br>
+                            <ol class="list-unstyled">
+                                {events_today}
                             </ol>
                         </div>
                     </div>
