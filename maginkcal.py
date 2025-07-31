@@ -47,7 +47,8 @@ def main():
     rotate_angle = config['rotateAngle']  # If image is rendered in portrait orientation, angle to rotate to fit screen
     calendars = config['calendars']  # Google calendar ids
     is24hour = config['is24h']  # set 24 hour time
-    day_view_cal_days_to_show = config['maxEventsForDayView'] # Number of days to retrieve from gcal, keep to 3 unless other parts of the code are changed too
+    day_view_day_to_fetch = config['maxDayFetchForDayView'] # Number of days to retrieve from gcal, keep to 3 unless other parts of the code are changed too
+    day_view_cal_days_to_show = config['maxEventsForDayView']
     lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
     lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
     owm_api_key = config["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
@@ -121,8 +122,8 @@ def main():
 
         # Retrieve Events for Day View
         day_view_start_datetime = display_tz.localize(dt.combine(curr_date, dt.min.time()))
-        day_view_end_datetime = display_tz.localize(dt.combine(curr_date + datetime.timedelta(days=day_view_cal_days_to_show - 1), dt.max.time()))
-        day_cal_event_list = gcal_service.get_events(curr_date, calendars, day_view_start_datetime, day_view_end_datetime, display_tz, day_view_cal_days_to_show, threshold_hours)
+        day_view_end_datetime = display_tz.localize(dt.combine(curr_date + datetime.timedelta(days=day_view_day_to_fetch - 1), dt.max.time()))
+        day_cal_event_list = gcal_service.get_events(curr_date, calendars, day_view_start_datetime, day_view_end_datetime, display_tz, day_view_day_to_fetch, threshold_hours)
         logger.info("Day View Calendar events retrieved in " + str(dt.now() - start))
 
         # bundle battery data
@@ -132,7 +133,7 @@ def main():
         }
 
         # Generate Day View
-        daily_calendar_image = render_service.generateDailyCal(curr_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, day_cal_event_list, day_view_cal_days_to_show, battery_status)
+        daily_calendar_image = render_service.generateDailyCal(curr_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, day_cal_event_list, day_view_day_to_fetch, day_view_cal_days_to_show,battery_status)
 
         # Display Day View
         if is_display_to_screen:

@@ -203,7 +203,7 @@ class RenderHelper:
         calendar_image = self.get_screenshot("calendar")
         return calendar_image
 
-    def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, event_list, num_cal_days, battery_status):
+    def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, event_list, num_days_fetched, num_events_to_show, battery_status):
 
         # Insert battery icon
         # batteryDisplayMode - 0: do not show / 1: always show / 2: show when battery is low
@@ -233,25 +233,30 @@ class RenderHelper:
         with open(self.currPath + '/dashboard_template.html', 'r') as file:
             dashboard_template = file.read()
 
-        # Populate the date and events
+        # Populate the date and eventss
+        events_marked_for_display = 0
         cal_events_list = []
-        for i in range(num_cal_days):
+        for i in range(num_days_fetched):
             cal_events_text = ""
 
-            if len(event_list[i]) == 0:
-                cal_events_text = '<div class="event"><span class="event-time">None</span></div>'
-            elif i == 0:  # TODAY — detailed format, only once
-                # cal_events_text += '<ul class="event-today-list">'
-                for event in event_list[i]:
-                    cal_events_text += f"""
-                        <li class="event">
-                            <strong>{self.get_short_time(event['startDatetime'])} - {self.get_short_time(event['endDatetime'])} : {event['summary']}</strong><br>
-                            <span class="event-today">Location: {event['location']}</span><br>
-                            <span class="event-today">Notes: {event['description']}</span><br><br>
-                        </li>
-                    """
+            for event in event_list[i]:
+                print(events_marked_for_display)
+                if events_marked_for_display >= num_events_to_show:
+                    break  # Stop adding events once limit is reached
+
+                cal_events_text += f"""
+                    <li class="event">
+                        <strong>{self.get_short_time(event['startDatetime'])} - {self.get_short_time(event['endDatetime'])} : {event['summary']}</strong><br>
+                        <span class="event-today">Location: {event['location']}</span><br>
+                        <span class="event-today">Notes: {event['description']}</span><br><br>
+                    </li>
+                """
+                events_marked_for_display += 1
 
             cal_events_list.append(cal_events_text)
+
+            if events_marked_for_display >= num_events_to_show:
+                break  # Optionally stop processing more days as well
 
         # Append the bottom and write the file
         html_file = open(self.currPath + '/dashboard.html', "w")
@@ -259,11 +264,7 @@ class RenderHelper:
             day=current_date.strftime("%-d"),
             month=current_date.strftime("%B"),
             weekday=current_date.strftime("%A"),
-            tomorrow=(current_date + timedelta(days=1)).strftime("%A"),
-            dayafter=(current_date + timedelta(days=2)).strftime("%A"),
             events_today=cal_events_list[0],
-            events_tomorrow=cal_events_list[1],
-            events_dayafter=cal_events_list[2],
             # I'm choosing to show the forecast for the next hour instead of the current weather
             current_weather_text=string.capwords(current_weather["weather"][0]["description"]),
             current_weather_id=current_weather["weather"][0]["id"],

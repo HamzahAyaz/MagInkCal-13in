@@ -3,6 +3,7 @@
   "thresholdHours": 24,
   "maxEventsPerDay": 3,
   "maxEventsForDayView": 4,
+  "maxDayFetchForDayView": 4,
   "isDisplayToScreen": true,
   "isShutdownOnComplete": true,
   "autoShutdownHour": 0,
