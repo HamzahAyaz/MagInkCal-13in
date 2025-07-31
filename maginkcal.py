@@ -47,7 +47,7 @@ def main():
     rotate_angle = config['rotateAngle']  # If image is rendered in portrait orientation, angle to rotate to fit screen
     calendars = config['calendars']  # Google calendar ids
     is24hour = config['is24h']  # set 24 hour time
-    day_view_cal_days_to_show = config['dayViewCalDaysToShow'] # Number of days to retrieve from gcal, keep to 3 unless other parts of the code are changed too
+    day_view_cal_days_to_show = config['maxEventsForDayView'] # Number of days to retrieve from gcal, keep to 3 unless other parts of the code are changed too
     lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
     lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
     owm_api_key = config["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
@@ -103,34 +103,45 @@ def main():
     month_calendar_image = render_service.generateMonthCal(cal_month_view_dict)
 
     print(curr_datetime.hour, auto_shutdown_hour)
-    if curr_datetime.hour >= auto_shutdown_hour:
-        try:
-            # Retrieve Weather Data
-            owm_module = OWMModule()
-            current_weather, hourly_forecast, daily_forecast = owm_module.get_weather(lat, lon, owm_api_key)
-            logger.info('Current Weather: {}'.format(current_weather))
+    if True: #curr_datetime.hour >= auto_shutdown_hour:
+        # try:
+        # Retrieve Weather Data
+        owm_module = OWMModule()
+        current_weather, hourly_forecast, daily_forecast = owm_module.get_weather(lat, lon, owm_api_key)
 
-            # Retrieve Events for Day View
-            day_view_start_datetime = display_tz.localize(dt.combine(curr_date, dt.min.time()))
-            day_view_end_datetime = display_tz.localize(dt.combine(curr_date + datetime.timedelta(days=day_view_cal_days_to_show - 1), dt.max.time()))
-            day_cal_event_list = gcal_service.get_events(curr_date, calendars, day_view_start_datetime, day_view_end_datetime, display_tz, day_view_cal_days_to_show, threshold_hours)
-            logger.info("Day View Calendar events retrieved in " + str(dt.now() - start))
+        # Get next 6 hours  in 12hr format
+        weather_forecast_times = []
+        for i in range(7):  # current + 6 = 7 total
+            future_time = curr_datetime + datetime.timedelta(hours=i)
+            hour_str = future_time.strftime("%-I %p")  # %I = 12-hour, %p = AM/PM
+            weather_forecast_times.append(hour_str)
 
-            # Generate Day View
-            daily_calendar_image = render_service.generateDailyCal(curr_date, current_weather, hourly_forecast, daily_forecast, day_cal_event_list, day_view_cal_days_to_show)
+        logger.info('Retrieved Weather Data')
 
-            # Display Day View
-            if is_display_to_screen:
-                from display.display import DisplayHelper
-                display_service = DisplayHelper(screen_width, screen_height)
-                display_service.update(daily_calendar_image)
-                display_service.sleep()
 
-                logger.info("Day View displayed, waiting 5 min to redisplay Month View... ")
-                time.sleep(300) # Wait 5min before displaying Month view again
+        # Retrieve Events for Day View
+        day_view_start_datetime = display_tz.localize(dt.combine(curr_date, dt.min.time()))
+        day_view_end_datetime = display_tz.localize(dt.combine(curr_date + datetime.timedelta(days=day_view_cal_days_to_show - 1), dt.max.time()))
+        day_cal_event_list = gcal_service.get_events(curr_date, calendars, day_view_start_datetime, day_view_end_datetime, display_tz, day_view_cal_days_to_show, threshold_hours)
+        logger.info("Day View Calendar events retrieved in " + str(dt.now() - start))
 
-        except Exception as e:
-            logger.error(e)
+        # print(hourly_forecast)
+
+        # Generate Day View
+        daily_calendar_image = render_service.generateDailyCal(curr_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, day_cal_event_list, day_view_cal_days_to_show)
+
+        # Display Day View
+        if is_display_to_screen:
+            from display.display import DisplayHelper
+            display_service = DisplayHelper(screen_width, screen_height)
+            display_service.update(daily_calendar_image)
+            display_service.sleep()
+
+            logger.info("Day View displayed, waiting 5 min to redisplay Month View... ")
+            time.sleep(300) # Wait 5min before displaying Month view again
+
+        # except Exception as e:
+        #     logger.error(e)
 
     # Display Month View
     if is_display_to_screen:

@@ -14,6 +14,7 @@ RPi device, while using a ESP32 or PiZero purely to just retrieve the image from
 import string
 import pathlib
 import logging
+import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -198,7 +199,7 @@ class RenderHelper:
         calendar_image = self.get_screenshot("calendar")
         return calendar_image
 
-    def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, event_list, num_cal_days):
+    def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, event_list, num_cal_days):
 
         # Read html template
         with open(self.currPath + '/dashboard_template.html', 'r') as file:
@@ -216,21 +217,11 @@ class RenderHelper:
                 for event in event_list[i]:
                     cal_events_text += f"""
                         <li class="event">
-                            <strong>{event['summary']}</strong><br>
-                            <span class="event-today">Time: {self.get_short_time(event['startDatetime'])}</span><br>
+                            <strong>{self.get_short_time(event['startDatetime'])} - {self.get_short_time(event['endDatetime'])} : {event['summary']}</strong><br>
                             <span class="event-today">Location: {event['location']}</span><br>
                             <span class="event-today">Notes: {event['description']}</span><br><br>
                         </li>
                     """
-                # cal_events_text += '</ul>'
-            else:  # FUTURE DAYS — condensed format
-                for event in event_list[i]:
-                    cal_events_text += '<div class="event">'
-                    if event["isMultiday"] or event["allday"]:
-                        cal_events_text += event['summary']
-                    else:
-                        cal_events_text += f'<span class="event-time">{self.get_short_time(event["startDatetime"])}</span> {event["summary"]}'
-                    cal_events_text += '</div>\n'
 
             cal_events_list.append(cal_events_text)
 
@@ -246,24 +237,35 @@ class RenderHelper:
             events_tomorrow=cal_events_list[1],
             events_dayafter=cal_events_list[2],
             # I'm choosing to show the forecast for the next hour instead of the current weather
-            # current_weather_text=day_of_month.capwords(current_weather["weather"][0]["description"]),
-            # current_weather_id=current_weather["weather"][0]["id"],
-            # current_weather_temp=round(current_weather["temp"]),
-            current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
-            current_weather_id=hourly_forecast[1]["weather"][0]["id"],
-            current_weather_temp=round(hourly_forecast[1]["temp"]),
-            today_weather_id=daily_forecast[0]["weather"][0]["id"],
-            tomorrow_weather_id=daily_forecast[1]["weather"][0]["id"],
-            dayafter_weather_id=daily_forecast[2]["weather"][0]["id"],
-            today_weather_pop=str(round(daily_forecast[0]["pop"] * 100)),
-            tomorrow_weather_pop=str(round(daily_forecast[1]["pop"] * 100)),
-            dayafter_weather_pop=str(round(daily_forecast[2]["pop"] * 100)),
-            today_weather_min=str(round(daily_forecast[0]["temp"]["min"])),
-            tomorrow_weather_min=str(round(daily_forecast[1]["temp"]["min"])),
-            dayafter_weather_min=str(round(daily_forecast[2]["temp"]["min"])),
-            today_weather_max=str(round(daily_forecast[0]["temp"]["max"])),
-            tomorrow_weather_max=str(round(daily_forecast[1]["temp"]["max"])),
-            dayafter_weather_max=str(round(daily_forecast[2]["temp"]["max"])),
+            current_weather_text=string.capwords(current_weather["weather"][0]["description"]),
+            current_weather_id=current_weather["weather"][0]["id"],
+            current_weather_temp=round(current_weather["temp"]),
+            # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
+            # current_weather_temp=round(hourly_forecast[1]["temp"]),
+            hour0=weather_forecast_times[0],
+            hour0_weather_id=hourly_forecast[0]["weather"][0]["id"],
+            hour0_weather_pop=str(round(hourly_forecast[0]["pop"] * 100)),
+            hour0_weather_temp=str(round(hourly_forecast[0]["temp"])),
+            hour1=weather_forecast_times[1],
+            hour1_weather_id=hourly_forecast[1]["weather"][0]["id"],
+            hour1_weather_pop=str(round(hourly_forecast[1]["pop"] * 100)),
+            hour1_weather_temp=str(round(hourly_forecast[1]["temp"])),
+            hour2=weather_forecast_times[2],
+            hour2_weather_id=hourly_forecast[2]["weather"][0]["id"],
+            hour2_weather_pop=str(round(hourly_forecast[2]["pop"] * 100)),
+            hour2_weather_temp=str(round(hourly_forecast[2]["temp"])),
+            hour3=weather_forecast_times[3],
+            hour3_weather_id=hourly_forecast[3]["weather"][0]["id"],
+            hour3_weather_pop=str(round(hourly_forecast[3]["pop"] * 100)),
+            hour3_weather_temp=str(round(hourly_forecast[3]["temp"])),
+            hour4=weather_forecast_times[4],
+            hour4_weather_id=hourly_forecast[4]["weather"][0]["id"],
+            hour4_weather_pop=str(round(hourly_forecast[4]["pop"] * 100)),
+            hour4_weather_temp=str(round(hourly_forecast[4]["temp"])),
+            hour5=weather_forecast_times[5],
+            hour5_weather_id=hourly_forecast[5]["weather"][0]["id"],
+            hour5_weather_pop=str(round(hourly_forecast[5]["pop"] * 100)),
+            hour5_weather_temp=str(round(hourly_forecast[5]["temp"])),
         ))
         html_file.close()
 
