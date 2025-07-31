@@ -192,14 +192,42 @@ class RenderHelper:
 
         # Append the bottom and write the file
         html_file = open(self.currPath + '/calendar.html', "w")
-        html_file.write(calendar_template.format(month=month_name, battText=batt_text, dayOfWeek=cal_days_of_week,
-                                                events=cal_events_text))
+        html_file.write(calendar_template.format(
+            month=month_name,
+            battText=batt_text,
+            dayOfWeek=cal_days_of_week,
+            events=cal_events_text
+        ))
         html_file.close()
 
         calendar_image = self.get_screenshot("calendar")
         return calendar_image
 
-    def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, event_list, num_cal_days):
+    def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, event_list, num_cal_days, battery_status):
+
+        # Insert battery icon
+        # batteryDisplayMode - 0: do not show / 1: always show / 2: show when battery is low
+        battery_display_mode = battery_status['batteryDisplayMode']
+        batt_level = battery_status['batteryLevel']
+
+        if battery_display_mode == 0:
+            batt_text = 'batteryHide'
+        elif battery_display_mode == 1:
+            if batt_level >= 80:
+                batt_text = 'battery80'
+            elif batt_level >= 60:
+                batt_text = 'battery60'
+            elif batt_level >= 40:
+                batt_text = 'battery40'
+            elif batt_level >= 20:
+                batt_text = 'battery20'
+            else:
+                batt_text = 'battery0'
+
+        elif battery_display_mode == 2 and batt_level < 20.0:
+            batt_text = 'battery0'
+        elif battery_display_mode == 2 and batt_level >= 20.0:
+            batt_text = 'batteryHide'
 
         # Read html template
         with open(self.currPath + '/dashboard_template.html', 'r') as file:
@@ -266,6 +294,7 @@ class RenderHelper:
             hour5_weather_id=hourly_forecast[5]["weather"][0]["id"],
             hour5_weather_pop=str(round(hourly_forecast[5]["pop"] * 100)),
             hour5_weather_temp=str(round(hourly_forecast[5]["temp"])),
+            battText=batt_text,
         ))
         html_file.close()
 

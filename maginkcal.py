@@ -125,10 +125,14 @@ def main():
         day_cal_event_list = gcal_service.get_events(curr_date, calendars, day_view_start_datetime, day_view_end_datetime, display_tz, day_view_cal_days_to_show, threshold_hours)
         logger.info("Day View Calendar events retrieved in " + str(dt.now() - start))
 
-        # print(hourly_forecast)
+        # bundle battery data
+        battery_status = {
+            'batteryLevel': curr_battery_level,
+            'batteryDisplayMode': battery_display_mode,
+        }
 
         # Generate Day View
-        daily_calendar_image = render_service.generateDailyCal(curr_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, day_cal_event_list, day_view_cal_days_to_show)
+        daily_calendar_image = render_service.generateDailyCal(curr_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, day_cal_event_list, day_view_cal_days_to_show, battery_status)
 
         # Display Day View
         if is_display_to_screen:
