@@ -240,7 +240,6 @@ class RenderHelper:
             cal_events_text = ""
 
             for event in event_list[i]:
-                print(events_marked_for_display)
                 if events_marked_for_display >= num_events_to_show:
                     break  # Stop adding events once limit is reached
 

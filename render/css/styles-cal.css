@@ -170,9 +170,9 @@ height: 100%;
   padding: 0.1rem;
   /* color: black; */
   /* font-family: "Judson-Regular";*/
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
   border-radius: 0rem;
   margin-bottom: 1px;
 }
@@ -213,8 +213,7 @@ div.batt_container {
   right: 15px;
   overflow: hidden
 }
-
-div.batt_container  {
+div.batt_container {
   z-index: 10;
 }
 
@@ -262,4 +261,12 @@ div.batt_container .batteryHide {
 body {
   min-height: 100vh;
   background-color: #ffffff;
+}
+#calendar-title {
+  text-align: center;
+  font-size: 50px;
+  font-weight: bold;
+  margin-top: 40px;
+  margin-bottom: 30px;
+  font-family: 'Georgia', serif;
 }
