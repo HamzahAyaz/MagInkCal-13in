@@ -32,11 +32,12 @@ def main():
     config = json.load(config_file)
 
     display_tz = timezone(config['displayTZ']) # list of timezones - print(pytz.all_timezones)
+    day_view_display_time_in_sec = config['dayViewDisplayTimeInSec']  # list of timezones - print(pytz.all_timezones)
     threshold_hours = config['thresholdHours']  # considers events updated within last 12 hours as recently updated
     max_events_per_day = config['maxEventsPerDay']  # limits number of events to display (remainder displayed as '+X more')
     is_display_to_screen = config['isDisplayToScreen']  # set to true when debugging rendering without displaying to screen
     is_shutdown_on_complete = config['isShutdownOnComplete']  # set to true to conserve power, false if in debugging mode
-    auto_shutdown_hour = config['autoShutdownHour']
+    auto_shutdown_delay_time_in_sec = config['autoShutdownDelayTimeInSec']
     battery_display_mode = config['batteryDisplayMode']  # 0: do not show / 1: always show / 2: show when battery is low
     week_start_day = config['weekStartDay']  # Monday = 0, Sunday = 6
     day_of_week_text = config['dayOfWeekText'] # Monday as first item in list
@@ -103,9 +104,7 @@ def main():
     render_service = RenderHelper(image_width, image_height, rotate_angle)
     month_calendar_image = render_service.generateMonthCal(cal_month_view_dict)
 
-    print(curr_datetime.hour, auto_shutdown_hour)
-    if True: #curr_datetime.hour >= auto_shutdown_hour:
-        # try:
+    try:
         # Retrieve Weather Data
         owm_module = OWMModule()
         current_weather, hourly_forecast, daily_forecast = owm_module.get_weather(lat, lon, owm_api_key)
@@ -142,11 +141,12 @@ def main():
             display_service.update(daily_calendar_image)
             display_service.sleep()
 
-            logger.info("Day View displayed, waiting 5 min to redisplay Month View... ")
-            time.sleep(300) # Wait 5min before displaying Month view again
+            display_time_in_min = day_view_display_time_in_sec / 60
+            logger.info("Day View displayed, waiting {} min to redisplay Month View... ".format(display_time_in_min))
+            time.sleep(day_view_display_time_in_sec) # Wait 5min before displaying Month view again
 
-        # except Exception as e:
-        #     logger.error(e)
+    except Exception as e:
+        logger.error(e)
 
     # Display Month View
     if is_display_to_screen:
@@ -165,20 +165,20 @@ def main():
 
     logger.info("Completed calendar update")
 
-    logger.info("Checking if configured to shutdown safely - Current hour: {}".format(curr_datetime.hour))
     if is_shutdown_on_complete:
         # Perform Smart Shutdown:
-        # - Wait 5min before initiating shutdown
-        # - After 5min check if any user is logged in, if so then delay shutdown by 5min
+        # - Wait some min (defined in config) before initiating shutdown
+        # - After some min (defined in config) check if any user is logged in, if so then delay shutdown
         # - Recheck and delay shutdown until user is no longer logged in.
 
-        perform_smart_shutdown(logger, 300)
+        perform_smart_shutdown(logger, auto_shutdown_delay_time_in_sec)
 
 def is_user_logged_in():
     result = subprocess.run(['who'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return bool(result.stdout.strip())  # True if anyone is logged in
 
-def perform_smart_shutdown(logger, check_interval=300):
+def perform_smart_shutdown(logger, check_interval):
+    logger.info("Waiting {} min before safely shutting down...".format(check_interval/60))
     while True:
         time.sleep(check_interval)
         if not is_user_logged_in():
@@ -186,12 +186,8 @@ def perform_smart_shutdown(logger, check_interval=300):
             os.system("sudo shutdown -h now")
             break
         else:
-            logger.info("User session detected. Postponing shutdown.")
+            logger.info("User session detected. Postponing shutdown for {} min".format(check_interval/60))
 
-def perform_clocked_shutdown(logger, curr_date_time, hour_to_shutdown=11):
-    if curr_date_time.hour == hour_to_shutdown:
-        logger.info("Shutting down safely.")
-        os.system("sudo shutdown -h now")
 
 if __name__ == "__main__":
     main()
