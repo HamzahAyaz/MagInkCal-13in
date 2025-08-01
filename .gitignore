@@ -5,6 +5,8 @@ gcal/token.pickle
 # Intermediate render files
 render/calendar.html
 render/calendar.png
+render/dashboard.html
+render/dashboard.png
 
 #intellij config
 .idea/
