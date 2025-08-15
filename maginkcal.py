@@ -27,6 +27,27 @@ from render.render import RenderHelper
 from power.power import PowerHelper
 
 def main():
+
+    # Create and configure logger
+    logging.basicConfig(filename="logfile.log", format='%(asctime)s %(levelname)s - %(message)s', filemode='a')
+    logger = logging.getLogger('maginkcal')
+    logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
+    logger.setLevel(logging.INFO)
+    logger.info("Starting daily calendar update")
+
+    # Wait until system time is synchronized via NTP
+    logger.info("Checking for system time sync...")
+    for _ in range(30):
+        ntp_synced = subprocess.run(['timedatectl', 'show', '-p', 'NTPSynchronized', '--value'], stdout=subprocess.PIPE, text=True).stdout.strip()
+        if ntp_synced == "yes":
+            break
+
+        print("Waiting for time sync...")
+        time.sleep(5)
+    else:
+        print("Time sync failed or took too long...Exiting")
+        return
+
     # Basic configuration settings (user replaceable)
     config_file = open('config.json')
     config = json.load(config_file)
@@ -34,7 +55,7 @@ def main():
     display_tz = timezone(config['displayTZ']) # list of timezones - print(pytz.all_timezones)
     day_view_display_time_in_sec = config['dayViewDisplayTimeInSec']  # list of timezones - print(pytz.all_timezones)
     threshold_hours = config['thresholdHours']  # considers events updated within last 12 hours as recently updated
-    max_events_per_day = config['maxEventsPerDay']  # limits number of events to display (remainder displayed as '+X more')
+    max_events_per_day = config['maxEventsForMonthView']  # limits number of events to display (remainder displayed as '+X more')
     is_display_to_screen = config['isDisplayToScreen']  # set to true when debugging rendering without displaying to screen
     is_shutdown_on_complete = config['isShutdownOnComplete']  # set to true to conserve power, false if in debugging mode
     auto_shutdown_delay_time_in_sec = config['autoShutdownDelayTimeInSec']
@@ -54,18 +75,11 @@ def main():
     lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
     owm_api_key = config["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
 
-    # Create and configure logger
-    logging.basicConfig(filename="logfile.log", format='%(asctime)s %(levelname)s - %(message)s', filemode='a')
-    logger = logging.getLogger('maginkcal')
-    logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
-    logger.setLevel(logging.INFO)
-    logger.info("Starting daily calendar update")
-
     # Establish current date and time information
     # Note: For Python dt.weekday() - Monday = 0, Sunday = 6
     curr_datetime = dt.now(display_tz)
     curr_date = curr_datetime.date()
-    logger.info("Time synchronised to {}".format(curr_datetime))
+    logger.info("Calender time synchronised to {}".format(curr_datetime))
 
     # Retrieve Battery Data
     power_service = PowerHelper()
@@ -81,28 +95,38 @@ def main():
     cal_view_end_datetime = display_tz.localize(dt.combine(cal_view_end_date, dt.max.time()))
 
     # Using Google Calendar to retrieve all events within start and end date (inclusive)
-    start = dt.now()
-    gcal_service = GcalHelper()
-    month_cal_event_list = gcal_service.retrieve_events(calendars, cal_view_start_datetime, cal_view_end_datetime, display_tz, threshold_hours)
-    logger.info("Month View Calendar events retrieved in " + str(dt.now() - start))
+    try:
+        start = dt.now()
+        gcal_service = GcalHelper()
+        month_cal_event_list = gcal_service.retrieve_events(calendars, cal_view_start_datetime, cal_view_end_datetime, display_tz, threshold_hours)
+        logger.info("Month View Calendar events retrieved in " + str(dt.now() - start))
 
-    # Populate dictionary with information to be rendered on e-ink display
-    cal_month_view_dict = {
-        'eventsMonthCal': month_cal_event_list,
-        'calStartDate': cal_view_start_date,
-        'today': curr_date,
-        'lastRefresh': curr_datetime,
-        'batteryLevel': curr_battery_level,
-        'batteryDisplayMode': battery_display_mode,
-        'dayOfWeekText': day_of_week_text,
-        'weekStartDay': week_start_day,
-        'maxEventsPerDay': max_events_per_day,
-        'is24hour': is24hour
-    }
+        # Populate dictionary with information to be rendered on e-ink display
+        cal_month_view_dict = {
+            'eventsMonthCal': month_cal_event_list,
+            'calStartDate': cal_view_start_date,
+            'today': curr_date,
+            'lastRefresh': curr_datetime,
+            'batteryLevel': curr_battery_level,
+            'batteryDisplayMode': battery_display_mode,
+            'dayOfWeekText': day_of_week_text,
+            'weekStartDay': week_start_day,
+            'maxEventsPerDay': max_events_per_day,
+            'is24hour': is24hour
+        }
+    except Exception as e:
+        logger.info("Error while fetching events from GCal")
+        logger.error(e)
+        return
 
     # Generate Month View
-    render_service = RenderHelper(image_width, image_height, rotate_angle)
-    month_calendar_image = render_service.generateMonthCal(cal_month_view_dict)
+    try:
+        render_service = RenderHelper(image_width, image_height, rotate_angle)
+        month_calendar_image = render_service.generateMonthCal(cal_month_view_dict)
+    except Exception as e:
+        logger.info("Error while generating Month View")
+        logger.error(e)
+        return
 
     try:
         # Retrieve Weather Data
@@ -147,6 +171,7 @@ def main():
 
     except Exception as e:
         logger.error(e)
+        return
 
     # Display Month View
     if is_display_to_screen:
@@ -173,20 +198,43 @@ def main():
 
         perform_smart_shutdown(logger, auto_shutdown_delay_time_in_sec)
 
-def is_user_logged_in():
-    result = subprocess.run(['who'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return bool(result.stdout.strip())  # True if anyone is logged in
+def is_user_logged_in(logger):
+    try:
+        # Run loginctl list-sessions and get the output in JSON format
+        command = ['loginctl', 'list-sessions', '--output=json']
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+        sessions = json.loads(result.stdout)
+
+        if len(sessions) > 0 :
+            logger.info("Session Detected: {}".format(len(sessions)))
+            logger.info("Session Info: {}".format(sessions))
+            return True
+        else:
+            return False
+
+    except FileNotFoundError:
+        # This can happen if loginctl is not installed or the system doesn't use systemd
+        logger.info("Error: 'loginctl' command not found. Are you running on a systemd-based OS?")
+        return False
+    except subprocess.CalledProcessError as e:
+        # Handle cases where the command returns a non-zero exit code
+        logger.info(f"Error running loginctl: {e.stderr}")
+        return False
+    except json.JSONDecodeError:
+        # Handle cases where the output is not valid JSON
+        logger.info("Error: Failed to parse JSON output from loginctl.")
+        return False
 
 def perform_smart_shutdown(logger, check_interval):
     logger.info("Waiting {} min before safely shutting down...".format(check_interval/60))
     while True:
         time.sleep(check_interval)
-        if not is_user_logged_in():
+        if not is_user_logged_in(logger):
             logger.info("No user session detected — shutting down safely.")
             os.system("sudo shutdown -h now")
             break
         else:
-            logger.info("User session detected. Postponing shutdown for {} min".format(check_interval/60))
+            logger.info("Postponing shutdown for {} min".format(check_interval/60))
 
 
 if __name__ == "__main__":
