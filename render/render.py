@@ -257,13 +257,13 @@ class RenderHelper:
             if events_marked_for_display >= num_events_to_show:
                 break  # Optionally stop processing more days as well
 
-        print("Current Weather IconId:", current_weather["weather"][0]["id"])
-        print("Current Hour+0 IconId:", hourly_forecast[0]["weather"][0]["id"])
-        print("Current Hour+1 IconId:", hourly_forecast[1]["weather"][0]["id"])
-        print("Current Hour+2 IconId:", hourly_forecast[2]["weather"][0]["id"])
-        print("Current Hour+3 IconId:", hourly_forecast[3]["weather"][0]["id"])
-        print("Current Hour+4 IconId:", hourly_forecast[4]["weather"][0]["id"])
-        print("Current Hour+5 IconId:", hourly_forecast[5]["weather"][0]["id"])
+        # print("Current Weather IconId:", current_weather["weather"][0]["icon"])
+        # print("Current Hour+0 IconId:", hourly_forecast[0]["weather"][0]["icon"])
+        # print("Current Hour+1 IconId:", hourly_forecast[1]["weather"][0]["icon"])
+        # print("Current Hour+2 IconId:", hourly_forecast[2]["weather"][0]["icon"])
+        # print("Current Hour+3 IconId:", hourly_forecast[3]["weather"][0]["icon"])
+        # print("Current Hour+4 IconId:", hourly_forecast[4]["weather"][0]["icon"])
+        # print("Current Hour+5 IconId:", hourly_forecast[5]["weather"][0]["icon"])
 
         # Append the bottom and write the file
         html_file = open(self.currPath + '/dashboard.html', "w")
@@ -274,32 +274,32 @@ class RenderHelper:
             events_today=cal_events_list[0],
             # I'm choosing to show the forecast for the next hour instead of the current weather
             current_weather_text=string.capwords(current_weather["weather"][0]["description"]),
-            current_weather_id=current_weather["weather"][0]["id"],
+            current_weather_id=current_weather["weather"][0]["icon"],
             current_weather_temp=round((current_weather["temp"]* 9/5) + 32, 1),
             # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
             # current_weather_temp=round(hourly_forecast[1]["temp"]),
             hour0=weather_forecast_times[0],
-            hour0_weather_id=hourly_forecast[0]["weather"][0]["id"],
+            hour0_weather_id=hourly_forecast[0]["weather"][0]["icon"],
             hour0_weather_pop=str(round(hourly_forecast[0]["pop"] * 100)),
             hour0_weather_temp=str(round((hourly_forecast[0]["temp"]* 9/5) + 32, 1)),
             hour1=weather_forecast_times[1],
-            hour1_weather_id=hourly_forecast[1]["weather"][0]["id"],
+            hour1_weather_id=hourly_forecast[1]["weather"][0]["icon"],
             hour1_weather_pop=str(round(hourly_forecast[1]["pop"] * 100)),
             hour1_weather_temp=str(round((hourly_forecast[1]["temp"]* 9/5) + 32, 1)),
             hour2=weather_forecast_times[2],
-            hour2_weather_id=hourly_forecast[2]["weather"][0]["id"],
+            hour2_weather_id=hourly_forecast[2]["weather"][0]["icon"],
             hour2_weather_pop=str(round(hourly_forecast[2]["pop"] * 100)),
             hour2_weather_temp=str(round((hourly_forecast[2]["temp"]* 9/5) + 32, 1)),
             hour3=weather_forecast_times[3],
-            hour3_weather_id=hourly_forecast[3]["weather"][0]["id"],
+            hour3_weather_id=hourly_forecast[3]["weather"][0]["icon"],
             hour3_weather_pop=str(round(hourly_forecast[3]["pop"] * 100)),
             hour3_weather_temp=str(round((hourly_forecast[3]["temp"]* 9/5) + 32, 1)),
             hour4=weather_forecast_times[4],
-            hour4_weather_id=hourly_forecast[4]["weather"][0]["id"],
+            hour4_weather_id=hourly_forecast[4]["weather"][0]["icon"],
             hour4_weather_pop=str(round(hourly_forecast[4]["pop"] * 100)),
             hour4_weather_temp=str(round((hourly_forecast[4]["temp"]* 9/5) + 32, 1)),
             hour5=weather_forecast_times[5],
-            hour5_weather_id=hourly_forecast[5]["weather"][0]["id"],
+            hour5_weather_id=hourly_forecast[5]["weather"][0]["icon"],
             hour5_weather_pop=str(round(hourly_forecast[5]["pop"] * 100)),
             hour5_weather_temp=str(round((hourly_forecast[5]["temp"]* 9/5) + 32, 1)),
             battText=batt_text,
