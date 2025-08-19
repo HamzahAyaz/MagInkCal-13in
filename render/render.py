@@ -257,6 +257,14 @@ class RenderHelper:
             if events_marked_for_display >= num_events_to_show:
                 break  # Optionally stop processing more days as well
 
+        print("Current Weather IconId:", current_weather["weather"][0]["id"])
+        print("Current Hour+0 IconId:", hourly_forecast[0]["weather"][0]["id"])
+        print("Current Hour+1 IconId:", hourly_forecast[1]["weather"][0]["id"])
+        print("Current Hour+2 IconId:", hourly_forecast[2]["weather"][0]["id"])
+        print("Current Hour+3 IconId:", hourly_forecast[3]["weather"][0]["id"])
+        print("Current Hour+4 IconId:", hourly_forecast[4]["weather"][0]["id"])
+        print("Current Hour+5 IconId:", hourly_forecast[5]["weather"][0]["id"])
+
         # Append the bottom and write the file
         html_file = open(self.currPath + '/dashboard.html', "w")
         html_file.write(dashboard_template.format(
