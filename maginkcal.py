@@ -35,19 +35,6 @@ def main():
     logger.setLevel(logging.INFO)
     logger.info("Starting daily calendar update")
 
-    # Wait until system time is synchronized via NTP
-    logger.info("Checking for system time sync...")
-    for _ in range(30):
-        ntp_synced = subprocess.run(['timedatectl', 'show', '-p', 'NTPSynchronized', '--value'], stdout=subprocess.PIPE, text=True).stdout.strip()
-        if ntp_synced == "yes":
-            break
-
-        print("Waiting for time sync...")
-        time.sleep(5)
-    else:
-        print("Time sync failed or took too long...Exiting")
-        return
-
     # Basic configuration settings (user replaceable)
     config_file = open('config.json')
     config = json.load(config_file)
@@ -74,6 +61,22 @@ def main():
     lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
     lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
     owm_api_key = config["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
+
+    # Wait until system time is synchronized via NTP
+    logger.info("Checking for system time sync...")
+    for _ in range(20):
+        ntp_synced = subprocess.run(['timedatectl', 'show', '-p', 'NTPSynchronized', '--value'], stdout=subprocess.PIPE, text=True).stdout.strip()
+        if ntp_synced == "yes":
+            break
+
+        print("Waiting for time sync...")
+        time.sleep(5)
+    else:
+        print("Time sync failed or took too long...Exiting")
+        if is_shutdown_on_complete:
+            perform_smart_shutdown(logger, 60) # shutdown delay time of 1 min
+
+        return
 
     # Establish current date and time information
     # Note: For Python dt.weekday() - Monday = 0, Sunday = 6
