@@ -141,23 +141,42 @@
                         </div>
                     </div>
 
-                    <!-- Upcoming Events -->
+                    <!-- ===== EVENT CARDS FULL VIEW ===== -->
+                    <div class="row event-cards text-left">
 
-                    <div class="row align-items-start" style="padding-left: 100px; padding-top: 60px;">  <!-- Add padding here -->
-                        <div class="col-md-12 text-left">
-                            <h1><strong>Upcoming Events:</strong></h1>
+                      <!-- Day 0 (Today) -->
+                      <div class="col-md-4">
+                        <div class="event-day-label">
+                          <h2>{day0_name}</h2>
+                          <p class="event-date">{day0_date}</p>
                         </div>
+                        <div class="event-card">
+                          {day0_events}
+                        </div>
+                      </div>
 
-                        <div class="row align-items-start ">
-                            <div class="col-md-12"  style="height: 50px"></div>
+                      <!-- Day 1 (Tomorrow) -->
+                      <div class="col-md-4">
+                        <div class="event-day-label">
+                          <h2>{day1_name}</h2>
+                          <p class="event-date">{day1_date}</p>
                         </div>
-                        <div class="row align-items-start ">
-                            <div class="col-md-12">
-                                <ol class="list-unstyled">
-                                    {events_today}
-                                </ol>
-                            </div>
+                        <div class="event-card">
+                          {day1_events}
                         </div>
+                      </div>
+
+                      <!-- Day 2 (Day After Tomorrow) -->
+                      <div class="col-md-4">
+                        <div class="event-day-label">
+                          <h2>{day2_name}</h2>
+                          <p class="event-date">{day2_date}</p>
+                        </div>
+                        <div class="event-card">
+                          {day2_events}
+                        </div>
+                      </div>
+
                     </div>
 
                     <div class="row align-items-start ">

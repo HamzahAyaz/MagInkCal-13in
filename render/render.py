@@ -203,7 +203,7 @@ class RenderHelper:
         calendar_image = self.get_screenshot("calendar")
         return calendar_image
 
-    def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, event_list, num_days_fetched, num_events_to_show, battery_status):
+    def generateDailyCal(self, current_date, current_weather, hourly_forecast, daily_forecast, weather_forecast_times, event_list, num_days_fetched, num_events_per_day, battery_status):
 
         # Insert battery icon
         # batteryDisplayMode - 0: do not show / 1: always show / 2: show when battery is low
@@ -233,37 +233,89 @@ class RenderHelper:
         with open(self.currPath + '/dashboard_template.html', 'r') as file:
             dashboard_template = file.read()
 
-        # Populate the date and eventss
-        events_marked_for_display = 0
-        cal_events_list = []
-        for i in range(num_days_fetched):
-            cal_events_text = ""
+        # Get current datetime for filtering past events
+        current_datetime = datetime.datetime.now()
 
-            for event in event_list[i]:
-                if events_marked_for_display >= num_events_to_show:
-                    break  # Stop adding events once limit is reached
+        # Generate event cards for 3 days
+        day_names = []
+        day_dates = []
+        day_events_html = []
 
-                cal_events_text += f"""
-                    <li class="event">
-                        <strong>{self.get_short_time(event['startDatetime'])} - {self.get_short_time(event['endDatetime'])} : {event['summary']}</strong><br>
-                        <span class="event-today">Location: {event['location']}</span><br>
-                        <span class="event-today">Notes: {event['description']}</span><br><br>
-                    </li>
+        for day_idx in range(3):  # Always show 3 days
+            day_date = current_date + timedelta(days=day_idx)
+
+            # Format day name and date
+            day_names.append(day_date.strftime("%A"))
+            day_dates.append(day_date.strftime("%B %-d"))
+
+            # Generate events HTML for this day
+            events_html = ""
+            events_count = 0
+
+            # Check if we have events for this day
+            if day_idx < len(event_list) and len(event_list[day_idx]) > 0:
+                for event in event_list[day_idx]:
+                    # For today (day_idx == 0), skip events that have already passed
+                    if day_idx == 0:
+                        event_end = event['endDatetime']
+
+                        # Make both datetimes comparable (remove timezone info if present)
+                        if event_end.tzinfo is not None:
+                            # Event has timezone, make current_datetime aware
+                            if current_datetime.tzinfo is None:
+                                # Use the same timezone as the event
+                                current_datetime_aware = current_datetime.replace(tzinfo=event_end.tzinfo)
+                                if event_end < current_datetime_aware:
+                                    continue
+                            else:
+                                if event_end < current_datetime:
+                                    continue
+                        else:
+                            # Event is naive, make sure current_datetime is also naive
+                            if current_datetime.tzinfo is not None:
+                                current_datetime_naive = current_datetime.replace(tzinfo=None)
+                                if event_end < current_datetime_naive:
+                                    continue
+                            else:
+                                if event_end < current_datetime:
+                                    continue
+
+                    # Stop if we've reached the max events per day
+                    if events_count >= num_events_per_day:
+                        break
+
+                    # Format event time
+                    start_time = self.get_short_time(event['startDatetime'])
+                    end_time = self.get_short_time(event['endDatetime'])
+
+                    # Get event details (with fallback for missing data)
+                    summary = event.get('summary', 'Untitled Event')
+                    location = event.get('location', 'No location')
+                    description = event.get('description', 'None')
+
+                    events_html += f"""
+                        <div class="event-item">
+                          <p class="event-time">{start_time} - {end_time}</p>
+                          <div class="event-details">
+                            <strong>{summary}</strong>
+                            <p>Location: {location}</p>
+                            <p>Notes: {description}</p>
+                          </div>
+                        </div>
+                    """
+                    events_count += 1
+
+            # If no events, show "No Events" message
+            if events_html == "":
+                events_html = """
+                    <div class="event-item">
+                      <div class="event-details">
+                        <p style="text-align: center; color: #888; padding: 20px 0;">No Events</p>
+                      </div>
+                    </div>
                 """
-                events_marked_for_display += 1
 
-            cal_events_list.append(cal_events_text)
-
-            if events_marked_for_display >= num_events_to_show:
-                break  # Optionally stop processing more days as well
-
-        # print("Current Weather IconId:", current_weather["weather"][0]["icon"])
-        # print("Current Hour+0 IconId:", hourly_forecast[0]["weather"][0]["icon"])
-        # print("Current Hour+1 IconId:", hourly_forecast[1]["weather"][0]["icon"])
-        # print("Current Hour+2 IconId:", hourly_forecast[2]["weather"][0]["icon"])
-        # print("Current Hour+3 IconId:", hourly_forecast[3]["weather"][0]["icon"])
-        # print("Current Hour+4 IconId:", hourly_forecast[4]["weather"][0]["icon"])
-        # print("Current Hour+5 IconId:", hourly_forecast[5]["weather"][0]["icon"])
+            day_events_html.append(events_html)
 
         # Append the bottom and write the file
         html_file = open(self.currPath + '/dashboard.html', "w")
@@ -271,41 +323,49 @@ class RenderHelper:
             day=current_date.strftime("%-d"),
             month=current_date.strftime("%B"),
             weekday=current_date.strftime("%A"),
-            events_today=cal_events_list[0],
-            # I'm choosing to show the forecast for the next hour instead of the current weather
+            # Current weather
             current_weather_text=string.capwords(current_weather["weather"][0]["description"]),
             current_weather_id=current_weather["weather"][0]["icon"],
-            current_weather_temp=round((current_weather["temp"]* 9/5) + 32, 1),
-            # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
-            # current_weather_temp=round(hourly_forecast[1]["temp"]),
+            current_weather_temp=round((current_weather["temp"] * 9 / 5) + 32, 1),
+            # Hourly forecast
             hour0=weather_forecast_times[0],
             hour0_weather_id=hourly_forecast[0]["weather"][0]["icon"],
             hour0_weather_pop=str(round(hourly_forecast[0]["pop"] * 100)),
-            hour0_weather_temp=str(round((hourly_forecast[0]["temp"]* 9/5) + 32, 1)),
+            hour0_weather_temp=str(round((hourly_forecast[0]["temp"] * 9 / 5) + 32, 1)),
             hour1=weather_forecast_times[1],
             hour1_weather_id=hourly_forecast[1]["weather"][0]["icon"],
             hour1_weather_pop=str(round(hourly_forecast[1]["pop"] * 100)),
-            hour1_weather_temp=str(round((hourly_forecast[1]["temp"]* 9/5) + 32, 1)),
+            hour1_weather_temp=str(round((hourly_forecast[1]["temp"] * 9 / 5) + 32, 1)),
             hour2=weather_forecast_times[2],
             hour2_weather_id=hourly_forecast[2]["weather"][0]["icon"],
             hour2_weather_pop=str(round(hourly_forecast[2]["pop"] * 100)),
-            hour2_weather_temp=str(round((hourly_forecast[2]["temp"]* 9/5) + 32, 1)),
+            hour2_weather_temp=str(round((hourly_forecast[2]["temp"] * 9 / 5) + 32, 1)),
             hour3=weather_forecast_times[3],
             hour3_weather_id=hourly_forecast[3]["weather"][0]["icon"],
             hour3_weather_pop=str(round(hourly_forecast[3]["pop"] * 100)),
-            hour3_weather_temp=str(round((hourly_forecast[3]["temp"]* 9/5) + 32, 1)),
+            hour3_weather_temp=str(round((hourly_forecast[3]["temp"] * 9 / 5) + 32, 1)),
             hour4=weather_forecast_times[4],
             hour4_weather_id=hourly_forecast[4]["weather"][0]["icon"],
             hour4_weather_pop=str(round(hourly_forecast[4]["pop"] * 100)),
-            hour4_weather_temp=str(round((hourly_forecast[4]["temp"]* 9/5) + 32, 1)),
+            hour4_weather_temp=str(round((hourly_forecast[4]["temp"] * 9 / 5) + 32, 1)),
             hour5=weather_forecast_times[5],
             hour5_weather_id=hourly_forecast[5]["weather"][0]["icon"],
             hour5_weather_pop=str(round(hourly_forecast[5]["pop"] * 100)),
-            hour5_weather_temp=str(round((hourly_forecast[5]["temp"]* 9/5) + 32, 1)),
+            hour5_weather_temp=str(round((hourly_forecast[5]["temp"] * 9 / 5) + 32, 1)),
+            # Battery
             battText=batt_text,
+            # Event cards for 3 days
+            day0_name=day_names[0],
+            day0_date=day_dates[0],
+            day0_events=day_events_html[0],
+            day1_name=day_names[1],
+            day1_date=day_dates[1],
+            day1_events=day_events_html[1],
+            day2_name=day_names[2],
+            day2_date=day_dates[2],
+            day2_events=day_events_html[2],
         ))
         html_file.close()
 
         calendar_image = self.get_screenshot("dashboard")
         return calendar_image
-

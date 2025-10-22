@@ -123,3 +123,120 @@ div.batt_container .battery0 {
 div.batt_container .batteryHide {
     display: none;
 }
+
+/* ===== EVENT CARDS (FIXED HEIGHT BALANCED WITH VIEWPORT) ===== */
+
+.event-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: stretch;
+    height: calc(100vh - 620px); /* slightly less total space — moves cards upward */
+    margin-top: 20px;
+    margin-bottom: 0; /* remove external margin to avoid viewport expansion */
+}
+
+.event-cards .col-md-4 {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.event-day-label {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.event-day-label h2 {
+    font-family: "TiltWarp-Regular", sans-serif;
+    font-size: 3rem;
+    margin-bottom: 5px;
+}
+
+.event-date {
+    color: gray;
+    font-family: "Lexend-Regular", sans-serif;
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.event-card {
+    background-color: #fff;
+    border-radius: 20px;
+    padding: 30px 40px;
+    flex: 1;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: calc(100% - 40px); /* reduce internal height to create visual bottom gap */
+    margin-bottom: 60px;
+}
+
+/* Individual event items */
+.event-item {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.event-item:last-child {
+    border-bottom: none;
+}
+
+/* Time flush left */
+.event-item .event-time {
+    display: block;
+    color: #000;
+    font-weight: 700;
+    font-size: 2.1rem;
+    margin-bottom: 4px;
+    margin-left: 0;
+}
+
+/* Indent everything else beneath the time */
+.event-item strong,
+.event-item p:not(.event-time) {
+    display: block;
+    margin-left: 1.5em;   /* indentation amount */
+    text-align: left;     /* ensure content is left aligned */
+}
+
+/* Title */
+.event-item strong {
+    font-size: 2.1rem;
+    color: #333;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.event-item p {
+    font-family: "Lexend-Regular", sans-serif;
+    font-size: 1.9rem;
+    color: #555;
+    margin: 2px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+    .event-cards {
+        height: auto;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .event-cards .col-md-4 {
+        width: 90%;
+        margin-bottom: 30px;
+    }
+
+    .event-card {
+        min-height: auto;
+        padding: 25px 30px;
+    }
+
+    .event-item strong,
+    .event-item p:not(.event-time) {
+        margin-left: 1.5em;
+    }
+}
