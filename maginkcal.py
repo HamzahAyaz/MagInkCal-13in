@@ -120,6 +120,10 @@ def main():
     except Exception as e:
         logger.info("Error while fetching events from GCal")
         logger.error(e)
+
+        if is_shutdown_on_complete:
+            perform_smart_shutdown(logger, 60) # shutdown delay time of 1 min
+
         return
 
     # Generate Month View
@@ -129,6 +133,10 @@ def main():
     except Exception as e:
         logger.info("Error while generating Month View")
         logger.error(e)
+
+        if is_shutdown_on_complete:
+            perform_smart_shutdown(logger, 60) # shutdown delay time of 1 min
+
         return
 
     try:
@@ -174,6 +182,10 @@ def main():
 
     except Exception as e:
         logger.error(e)
+
+        if is_shutdown_on_complete:
+            perform_smart_shutdown(logger, 60) # shutdown delay time of 1 min
+
         return
 
     # Display Month View
