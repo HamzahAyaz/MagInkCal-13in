@@ -123,7 +123,7 @@ class RenderHelper:
             calendar_template = file.read()
 
         # Insert month header
-        month_name = str(cal_dict['today'].month)
+        month_name = cal_dict['today'].strftime("%B")
 
         # Insert battery icon
         # batteryDisplayMode - 0: do not show / 1: always show / 2: show when battery is low
@@ -185,6 +185,7 @@ class RenderHelper:
                     cal_events_text += '">' + self.get_short_time(event['startDatetime'], is24hour) + ' ' + event[
                         'summary']
                 cal_events_text += '</div>\n'
+
             if len(cal_list[i]) > max_events_per_day:
                 cal_events_text += '<div class="event text-muted">' + str(len(cal_list[i]) - max_events_per_day) + ' more'
 
